@@ -1,0 +1,134 @@
+<!DOCTYPE HTML>
+<html>
+   <head>
+   	  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+      <title>Dashboard - OnSize</title> 
+
+      <link rel="stylesheet" href="/css/materialize.min.css">
+      
+      <link rel='stylesheet' href='/css/style1.css' type='text/css' media='all' /> 
+
+      <link rel='stylesheet' href='/css/font-awesome.min.css' type='text/css' media='all' /> 
+      <link rel="stylesheet" href="/css/open-sans.css"> 
+
+      <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAmLTgvZ8UA3NJKPzXq7nnW_xVlBTjhvm0&libraries=places,geometry"></script>          
+   </head>
+   <body id="index">     
+   	<nav>
+      <div id="mask"></div>
+   		<header>
+        <strong>Nome</strong>
+
+        <a id="user-menu" href="javascript:void(0);" class="drop-btn fa fa-chevron-down"></a>
+        <ul class='drop user-menu'>
+          <li><a href="/perfil">Ver Perfil</a></li>
+          <li cap="usuarios"><a href="/usuarios">Usuários</a></li>
+          <li><a id="auth" href="javascript:void(0);">Sair</a></li>
+        </ul>
+   		</header>
+   		<section>
+       <span>Pessoas:</span>      
+       <ul>
+         <li><a href="/contatos/"><i class="fa fa-user"></i> Contatos</a></li>
+       </ul>
+
+       <span>Finanças:</span>      
+       <ul>
+         <li><a href="/caixa/"><i class="fa fa-database"></i> Caixa</a></li>
+       </ul>
+
+       <span>Produtos:</span>      
+       <ul>
+         <li><a href="/produtos/"><i class="fa fa-cubes"></i> Estoque</a></li>
+       </ul> 
+
+       <span>Vendas:</span>      
+       <ul>
+         <li><a href="/vendas/pdv"><i class="fa fa-shopping-basket"></i> PDV</a></li>
+         <li><a href="/vendas/pedidos"><i class="fa fa-briefcase"></i> Pedidos</a></li>         
+         <li><a href="/vendas/entregas" class="target"><i class="fa fa fa-truck"></i> Entregas</a></li>
+       </ul>  
+
+       <ul>
+        <li><a href="/config"><i class="fa fa fa-cog"></i> Configurações</a></li>
+       </ul>
+
+   		</section>
+
+              
+      <img id="logo" src="/img/logo.svg" />
+        <a id="auth" href="javascript:void(0);" class="fa fa-sign-out" title="Sair"></a>
+
+
+   	</nav>
+
+    <i class="fa fa-bars" id="btn-nav-visible"></i> 
+   	<main>
+      <img src="/img/puff.svg" id="puff"/>
+   	</main>
+        
+
+    <section id="login" style="display:none;">
+      <div>
+        <img src="/img/logo2.svg" style="position: absolute;margin-top: -130px;"/>
+        <p>
+          <label for="user_login">E-mail<br>
+          <input type="text" id="user_login" required autofocus/></label>
+        </p>
+        <p>
+          <label for="user_pass">Senha<br>
+          <input type="password" id="user_pass" required /></label>
+        </p> 
+
+        <input type="submit" id="btn-login" value="Login" class="btn">       
+        <div class='result'></div>
+      </div>
+    </section>
+
+    <link rel='stylesheet' href='/css/style2.css' type='text/css' media='all' />
+
+    <script type="text/javascript" src="/js/jquery-3.2.1.min.js"></script>
+
+    <script src="/js/jquery-ui.js"></script>  
+    <link rel="stylesheet" href="/css/jquery-ui.css">
+    
+    <script src="/js/materialize.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.1/firebase.js"></script>
+
+    <script src="/js/jquery.cookie.js"></script>  
+
+    <script src="/js/datepicker.js"></script> 
+    <link rel='stylesheet' href='/css/datepicker.css' type='text/css' media='all' />
+
+
+    <script src="/js/jquery.ui.position.min.js"></script> 
+    <script src="/js/jquery.contextMenu.min.js"></script> 
+    <link rel='stylesheet' href='/css/jquery.contextMenu.min.css' type='text/css' media='all' />
+
+    <script type="text/javascript" src="/js/hammer.min.js"></script>  
+
+    <script type="text/javascript" src="/js/jquery.mask.js"></script>
+
+    <script type="text/javascript" src="/js/moment.min.js"></script>
+    <script type="text/javascript" src="/js/fullcalendar.min.js"></script>
+    <link rel='stylesheet' href='/css/fullcalendar.min.css' type='text/css' media='all' />
+
+    <script type="text/javascript" src="/js/tree.jquery.js"></script>
+    <link rel='stylesheet' href='/css/jqtree.css' type='text/css' media='all' />
+
+
+    <script type="text/javascript" src="/js/scripts.js"></script>   
+    <script type="text/javascript" src="/js/delegate.js"></script> 
+    <script type="text/javascript" src="/js/extend.js"></script> 
+    <script type="text/javascript" src="/js/functions.js"></script>     
+
+    <script type="text/javascript">
+      var worker = new Worker('/js/worker.js');
+
+      worker.addEventListener('message', function(e) {
+        console.log('Retorno do Worker: ', e.data);
+      }, false);            
+    </script>
+</html>

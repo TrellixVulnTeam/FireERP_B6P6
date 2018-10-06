@@ -1,0 +1,52 @@
+<header>
+  <h1>Contatos</h1>
+</header>
+
+<section>
+  <div class="tip">
+    <i class="fa fa-search"></i>
+    <input id="search" placeholder="Buscar..."/>
+  </div>
+  <table ref="/contatos/">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Telefone<a href="javascript:void(0);" class="fa fa-sliders btn-filter" ctrl-key="l" title="Opções (CTRL + L)"></a></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="{key}">
+        <td colspan="{if(tipo == 'Produzir') '2';}">
+          {nome}
+        </td>
+        <td>                                
+          {fone}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <span id="cont"></span>
+
+  <ul class="pagination"></ul>	
+</section>
+
+
+
+<form id="incluir" ref="/contatos/" title="Incluir" width="500px">
+  <input name="key" type="hidden">
+  <p>
+    <label for="nome">Nome:</label>
+    <input type="text" name="nome" required autofocus>
+  </p>    
+
+  <div style="width: 30%;">
+    <label for="fone">Fone:<br></label>
+    <input type="text" name="fone">
+  </div>    
+  <div style="width: 30%;padding-right: 0;">
+    <label for="cpf">CPF:</label>
+    <input type="text" name="cpf"/>
+  </div>
+</form>
+
+<button ref="incluir" ctrl-key="i" class="btn-form btn-floating btn-large waves-effect waves-light" title="Incluir (CTRL I)"><i class="fa fa-plus"></i></button>

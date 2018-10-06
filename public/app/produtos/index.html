@@ -1,0 +1,126 @@
+<header>
+  <h1>Produtos</h1>
+  <a href="/caixa/relatorios" class="fa fa-bar-chart"></a>
+</header>
+
+<section>
+  <div class="tip">
+    <i class="fa fa-search"></i>
+    <input id="search" placeholder="Buscar..."/>
+    <div id="filter-cats" tree ref="/_config/produtos/cats/"></div>
+  </div>
+  <table ref="/produtos/">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Estoque</th>
+        <th>Valor<a href="javascript:void(0);" class="fa fa-sliders btn-filter" ctrl-key="l" title="Opções (CTRL + L)"></a></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="{key}">
+        <td colspan="{if(tipo == 'Produzir') '2';}">
+          {nome}
+        </td>
+        <td style="{if(tipo == 'Produzir') 'display:none;';}">{estoque}</td>
+        <td>   
+          <div ref="anexo"><img src="{anexo}" class="anexo"></div>                                  
+          R$ {toMoeda(valor)}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <span id="cont"></span>
+
+  <ul class="pagination"></ul>	
+</section>
+
+
+
+<form id="incluir" ref="/produtos/" title="Incluir" width="500px">
+  <input name="key" type="hidden">
+  <input name="cat" type="hidden">
+
+  <div id="anexo"></div>
+  <input type="file" id="anexo-file" accept="image/gif, image/jpeg, image/png">
+
+  <p style="margin-left: 150px;">
+    <label for="nome">Nome:</label>
+    <input type="text" name="nome" required autofocus />
+  </p>  
+
+  <div style="width: 30%;">
+    <label for="valor">Valor:<br></label>
+    <input type="text" name="valor" validate="moeda" format="float" blur/>
+  </div>    
+  <div style="width: 30%;padding-right: 0;">
+    <label for="data">Estoque:</label>
+    <input type="text" name="estoque"/>
+  </div>    
+
+  <p id="cats" tree ref="/_config/produtos/cats/"></p>
+
+  <div class="box-more">
+    <p>    
+      <label for="tipo">Ação:<br></label>  
+      <select name="tipo" id="tipo" blur>
+        <option>Revender</option>
+        <option>Produzir</option>
+        <option>Utilizar</option>
+      </select>
+    </p> 
+
+    <p>
+      <label for="obs">Insumos:</label>
+      <div class="chips" name="insumos"></div>
+    </p>
+
+    <p>
+      <label for="obs">Observação:</label>
+      <textarea name="obs" class="materialize-textarea"></textarea>
+    </p>     
+  </div>
+  <i class="fa fa-chevron-down btn-form-more"></i>
+</form>
+
+<button ref="incluir" ctrl-key="i" class="btn-form btn-floating btn-large waves-effect waves-light" title="Incluir (CTRL I)"><i class="fa fa-plus"></i></button>
+
+<script type="text/javascript">
+$('#cats').once(function(event) { 
+  var node = $('#cats').tree('getSelectedNode');
+
+  if(!node || event.node.name != node.name){
+    $('form [name="cat"]').val(event.node.name);
+  }else{
+    $('form [name="cat"]').val('');
+  }
+});
+
+$('#filter-cats').once(function(event) { 
+  var node = $('#filter-cats').tree('getSelectedNode');
+
+  if(!node || event.node.name != node.name){
+    firebase.database().ref('/produtos/').orderByChild("cat").equalTo(event.node.name).once('value', function(snapshot) {
+          $('table[ref]').draw( snapshot, function(snapshot) {
+            $('.pagination,#cont').hide();
+          });
+    });           
+  }else{
+    firebase.database().ref('/produtos/').once('value', function(snapshot) { 
+          $('table[ref]').draw( snapshot, function(snapshot) {
+            $('.pagination,#cont').show();
+          });
+    });
+  }
+});
+
+$('select[name="tipo"]').change(function() {
+  if($(this).val() == 'Produzir'){
+    $('[name="estoque"]').parent().hide();
+  }else{
+    $('[name="estoque"]').parent().show();
+  }
+}).blur(function() {
+  $(this).change();
+});
+</script>

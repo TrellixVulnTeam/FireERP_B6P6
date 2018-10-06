@@ -1,0 +1,53 @@
+<header>
+  <h1>Perfil</h1>
+</header>
+
+<section>
+	<img src="/img/default.jpeg" style="width: 200px;float: left;margin-right: 20px;">
+	<div style="border: 1px solid rgba(0,0,0,.1);margin-left: 220px;padding: 10px;background: #fff;">
+	    <label for="nome" class="">Nome:</label>
+	    <input type="text" name="nome" placeholder="Seu nome" autofocus/>
+
+	    <div style="width: 30%;display: table-cell;">
+		    <label for="nome" class="">Senha:</label>
+		    <input type="password" name="pass1" placeholder="Sua Senha" />	    	
+	    </div>
+	    <div style="width: 30%;display: table-cell;">
+		    <label for="nome" class="">Confirmação:</label>
+		    <input type="password" name="pass2" placeholder="Confirmação da Senha" />	    	
+	    </div>
+	</div>
+	<br /><br />
+	<button id="btn-salvar" class="btn-receber btn-large green waves-effect waves-light" style="width: 100%;margin-top: 20px;">Salvar</button>
+
+</section>	
+
+<script type="text/javascript">
+$( "#btn-salvar" ).click(function() {
+  pass1 = $('[name="pass1"]').val();
+  pass2 = $('[name="pass2"]').val();
+
+  if(pass1 != '' && pass2 != ''){
+  	if(pass1 == pass2){
+		firebase.auth().currentUser.updatePassword(pass1).then(function() {
+		  Materialize.toast('Senha Alterada!', 4000);
+		}).catch(function(error) {
+		  alert(error.message);
+		});  		
+  	}else{
+  		alert('Senha diferente da confirmação!');
+  	}
+  }
+
+  if($('[name="nome"]').val() != ''){
+  	firebase.database().ref("/_users/"+firebase.auth().currentUser.uid).update({nome:$('[name="nome"]').val()});
+  	Materialize.toast('Perfil alterado com sucesso!', 4000)
+  }
+});	
+
+setTimeout(function(){
+	firebase.database().ref("/_users/"+firebase.auth().currentUser.uid).once('value', function(snap) {
+		$('[name="nome"]').val(snap.val().nome);
+	});
+}, 500);
+</script>

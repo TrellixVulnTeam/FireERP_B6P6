@@ -1,0 +1,516 @@
+<header>
+  <h1>Configurações</h1>
+  <a href="javascript:void(0);" class="fa fa-cogs btn-form" ref="form-configs"></a>
+</header>
+
+<section>
+
+<div class="blocks" id="configs">
+	<div id="origem" unsortable>
+	  <h2><i class="fa fa-map-marker"></i> Sua Localização <input type="text" name="origem" style="border: 0;box-shadow: none;margin: 0; width: 50%;"/></h2>
+	  <div id="map" style="width: 100%;height: 200px;"></div>
+	</div>
+	<div id="modos">
+	  <h2>
+		<i class="fa fa-file"></i> Modos de Pagamento
+		<a class="fa fa-plus btn-form" href="javascript:void(0);" ref="finance-modos" style="float: none;margin-left: 10px;border-left: 1px dashed #ccc;padding-left: 10px;"> Incluir</a>
+		<a class="fa fa-chevron-down btn-block-close"></a>
+	  </h2>
+	  <div>
+		<ul ref="/_config/finance/modo/" on>
+			<li id="{key}">{nome}</li>
+		</ul>
+	  </div>
+	</div>
+	<div id="status">
+	  <h2>
+		<i class="fa fa-flag"></i> Status das vendas
+		<a class="fa fa-plus btn-form" href="javascript:void(0);" ref="vendas-status" style="float: none;margin-left: 10px;border-left: 1px dashed #ccc;padding-left: 10px;"> Incluir</a>
+		<a class="fa fa-chevron-down btn-block-close"></a>
+	  </h2>
+	  <div>
+		<ul ref="/_config/vendas/status/" on>
+			<li style="background: {cor}" id="{key}">{nome}</li>
+		</ul>	  		  	
+	  </div>
+	</div>
+	<div id="cats" unsortable>
+	  <h2>
+		<i class="fa fa-flag"></i> Categorias
+		<a class="fa fa-plus" href="javascript:void(0);" style="float: none;margin-left: 10px;border-left: 1px dashed #ccc;padding-left: 10px;"> Incluir</a>
+		<a class="fa fa-chevron-down btn-block-close"></a>
+	  </h2>
+	  <div>
+		<ul  tree ref="/_config/produtos/cats/">
+			<li style="background: {cor}" id="{key}">{nome}</li>
+		</ul>	  		  	
+	  </div>
+	</div>	
+	<div id="zonas">
+	  <h2>
+		<i class="fa fa-map"></i> Zonas
+		<a class="fa fa-plus btn-form" id="btn-zonas" href="javascript:void(0);" ref="form-zonas" style="float: none;margin-left: 10px;border-left: 1px dashed #ccc;padding-left: 10px;"> Incluir</a>
+		<a class="fa fa-chevron-down btn-block-close"></a>
+	  </h2>
+	  <div>
+		<ul ref="/_config/vendas/zonas/" on>
+			<li style="background: {cor}" id="{key}">{endereco}</li>
+		</ul>	  		  	
+	  </div>
+	</div>				
+</div>
+
+
+<form id="form-configs" ref="/_config/options" title="Parâmetros" width="500px">
+	<div style="width: 30%;">
+	    <label for="valor" class="">Tempo de Produção:<br></label>
+	    <input name="time" type="hidden">
+	    <input type="number" name="number" style="width: 30%;" blur>
+	    <select name="fator" style="width: 69%;float: right;" blur>
+	    	<option value="1">Segundos</option>
+	    	<option value="60">Minutos</option>
+	    	<option value="120">Horas</option>
+	    </select>
+    </div>	   
+</form>
+
+
+<form id="finance-modos" ref="/_config/finance/modo/" title="Modo de pagamento" width="500px">
+  <input name="key" type="hidden">
+  <p>
+    <input type="text" name="nome" required id="nome" autofocus/>
+  </p>    
+</form>
+
+<form id="vendas-status" ref="/_config/vendas/status/" title="Status da venda" width="500px">
+  <input name="key" type="hidden">
+  <p>
+    <input type="color" name="cor" required style="width: 10%" />
+    <input type="text" name="nome" required style="width: 89%;float:right;" autofocus/>
+  </p>    
+</form>
+
+<form id="form-zonas" ref="/_config/vendas/zonas/" title="Zonas" width="500px;">
+	<input name="key" type="hidden">
+	<input name="bounds" type="hidden" id="bounds">
+
+	<input type="color" name="cor" required style="width: 10%;height: 50px;" id="zona-color"/>
+    <div style="width: 85%;float: right;padding-right: 0;">    
+      <label for="entregador">Entregador:<br></label>  
+      <select name="entregador" id="entregador" ref="/_users/" on>
+        <option value="{key}">{nome}</option>
+      </select>
+    </div> 
+	<div style="width: 20%;">
+	    <label for="valor">Valor:<br></label>
+	    <input type="text" name="valor" id="valor" validate="moeda" format="float" blur/>
+	</div>  
+	<div style="width: 70%;padding-right: 0;">
+	    <label for="data">Endereço:</label>
+	    <input id="address" type="text" value="" name="endereco">
+	</div>  
+  	<span id="text"></span>
+  	<div id="map-zona" style="width: 500px;height: 300px;"></div> 
+
+	<script>
+		if(typeof google != "undefined"){
+	        var zonaMap = new google.maps.Map(document.getElementById('map-zona'), {
+	          zoom: 16,
+	          center: {lat: 0, lng: 0}
+	        });
+	        var geocoder = new google.maps.Geocoder();
+		    var service = new google.maps.DistanceMatrixService();
+	
+	        firebase.database().ref('/_config/origem').once('value', function(origem) {
+	        	var point = String( origem.val() ).split(',');
+		    	zonaMap.setCenter( {  lat: parseFloat(point[0]), lng: parseFloat(point[1])  } );
+			});
+
+	        $('#address').keyup(function() {
+
+			  clearTimeout(start);
+			  start = setTimeout(function(){ 
+			    geocodeAddress(geocoder, zonaMap);
+			  }, 500);        	
+	          
+	        });
+
+			function callDistance(response, status) {
+				if(response.rows[0].elements[0].status == 'OK'){
+					$('#distance').val(response.rows[0].elements[0].distance.value);
+					$('#duration').val(response.rows[0].elements[0].duration.value);
+
+					$('#text').html(response.rows[0].elements[0].distance.text+','+response.rows[0].elements[0].duration.text);
+			  	}else{
+					$('#distance').val('');
+					$('#duration').val('');
+					$('#text').html('');						  		
+			  	}
+			}	        
+
+			var rectangle = new google.maps.Rectangle({
+			  map:zonaMap,
+	          strokeWeight: 0.3,
+	          fillColor: $("#zona-color").val(),
+	          fillOpacity: 0.5,				
+	          bounds: zonaMap.getBounds(),
+	          editable: true,
+	          draggable: true
+	        });
+
+	        rectangle.addListener('bounds_changed', showNewRect);
+
+	        function showNewRect(event) {
+	        	zona_serialize(rectangle);
+	        }
+
+
+			function zona_serialize(){
+			    var json = rectangle.getBounds().toString();
+
+			    json = json.replace(/\(/g,"[").replace(/\)/g,"]");
+			    $('#bounds').val(json);
+
+			    return json;
+			}
+			function zona_deserialize(json){
+			    json = JSON.parse(json);
+		        rectangle.setBounds( new google.maps.LatLngBounds(
+                  new google.maps.LatLng(json[0][0],json[0][1]),
+                  new google.maps.LatLng(json[1][0],json[1][1])
+                ) );
+
+                zonaMap.fitBounds( new google.maps.LatLngBounds(
+                  new google.maps.LatLng(json[0][0],json[0][1]),
+                  new google.maps.LatLng(json[1][0],json[1][1])
+                ) );
+			}
+
+
+	      	function geocodeAddress(geocoder, resultsMap) {
+		        var address = document.getElementById('address').value;
+		        geocoder.geocode({'address': address}, function(results, status) {
+		          if (status === 'OK') {
+		          	
+					if (results[0].geometry.bounds) {
+					    resultsMap.fitBounds(results[0].geometry.bounds);
+					    rectangle.setBounds(results[0].geometry.bounds);
+					}
+
+		          	$('#position').val( String(results[0].geometry.location).replace('(','').replace(')','') );
+
+		            resultsMap.setCenter(results[0].geometry.location);
+
+					firebase.database().ref('/_config/origem').once('value', function(snapshot) {
+						service.getDistanceMatrix({
+						      origins: [snapshot.val()],
+						      destinations: [results[0].geometry.location],
+						      travelMode: 'DRIVING',
+						      unitSystem: google.maps.UnitSystem.METRIC,
+						      avoidHighways: false,
+						      avoidTolls: false
+						  }, callDistance);						
+					});
+
+		            $('#address').css('background','#fff');
+		          } else {
+		            $('#address').css('background','#fee');
+
+					$('#distance').val('');
+					$('#duration').val('');
+					$('#text').html('');		            
+		          }
+		        });
+	      	}
+
+	        autocomplete = new google.maps.places.Autocomplete((document.getElementById('address')),{types: ['geocode'], componentRestrictions: { country: 'BR'}});
+	        autocomplete.addListener('place_changed', function(){
+		        $('#address').keyup();        	
+	        });
+
+			$( "#zona-color" ).change(function() {
+			  rectangle.setOptions({fillColor: $(this).val()});
+			});	       
+    	}
+    </script>  
+</form>
+
+
+
+<script type="text/javascript">
+var map = new google.maps.Map(document.getElementById('map'), {
+  zoom: 16,
+  center: {lat: 0, lng: 0}
+});
+
+google.maps.event.addDomListener(map, 'zoom_changed', function() {
+  json = map.getBounds().toString();
+  json = json.replace(/\(/g,"[").replace(/\)/g,"]");
+
+  firebase.database().ref('/_config/limites').set( json );
+});
+google.maps.event.addDomListener(map, 'drag', function() {
+  json = map.getBounds().toString();
+  json = json.replace(/\(/g,"[").replace(/\)/g,"]");
+
+  firebase.database().ref('/_config/limites').set( json );
+});
+
+firebase.database().ref('/_config/limites').once('value', function(snap) {
+	if(snap.val()){
+	    json = JSON.parse(snap.val());
+
+	    map.fitBounds( new google.maps.LatLngBounds(
+	      new google.maps.LatLng(json[0][0],json[0][1]),
+	      new google.maps.LatLng(json[1][0],json[1][1])
+	    ) );		
+	}
+});
+
+var marker = new google.maps.Marker({
+    map: map,
+    draggable: true,
+});
+
+var infoWindow = new google.maps.InfoWindow();
+
+var zonas = [];
+
+firebase.database().ref('/_config/vendas/zonas').on('value', function(snap) {
+	snap.forEach(function(item) { 
+	    json = JSON.parse(item.val().bounds);
+
+		if(typeof zonas[item.key] == 'undefined'){
+			zonas[item.key] = new google.maps.Rectangle({
+		        strokeWeight: 0.3,
+		        fillColor: item.val().cor,
+		        fillOpacity: 0.5,
+	          	map: map,
+	          	bounds: new google.maps.LatLngBounds(
+		          new google.maps.LatLng(json[0][0],json[0][1]),
+		          new google.maps.LatLng(json[1][0],json[1][1])
+		        ),
+		        editable: true,
+		        draggable: true		        
+	        });
+
+	        zonas[item.key].addListener('click', function() {
+		        infoWindow.setContent(item.val().endereco);
+		        infoWindow.setPosition(zonas[item.key].getBounds().getNorthEast());
+		        infoWindow.open(map);	        	
+	        });
+
+	        zonas[item.key].addListener('bounds_changed', function() {
+			    var json = zonas[item.key].getBounds().toString();
+
+			    json = json.replace(/\(/g,"[").replace(/\)/g,"]");
+
+			    firebase.database().ref('/_config/vendas/zonas/'+item.key+'/bounds').set(json);
+	        });
+		}else{
+		    json = JSON.parse(item.val().bounds);
+	        zonas[item.key].setBounds( new google.maps.LatLngBounds(
+              new google.maps.LatLng(json[0][0],json[0][1]),
+              new google.maps.LatLng(json[1][0],json[1][1])
+            ) );						
+		}
+	});
+});
+
+firebase.database().ref('/_config/vendas/zonas').on('child_removed', function(snapshot) {
+	zonas[snapshot.key].setMap(null);                   
+});
+
+firebase.database().ref('/_config/origem').on('value', function(origem) {
+	if(origem.val() != null){
+		var point = String( origem.val() ).split(',');
+
+		marker.setPosition({  lat: parseFloat(point[0]), lng: parseFloat(point[1])  });
+
+		$('input[name="origem"]').val(parseFloat(point[0])+','+parseFloat(point[1]));
+	}else{
+		if (navigator.geolocation) {
+		  navigator.geolocation.getCurrentPosition(function(position) {
+		    var pos = {
+		      lat: position.coords.latitude,
+		      lng: position.coords.longitude
+		    };
+
+			marker.setPosition(pos);
+
+			$('input[name="origem"]').val(position.coords.latitude+','+position.coords.longitude);
+			firebase.database().ref('/_config/origem').set( $('input[name="origem"]').val() );
+		  });
+		} else {
+		  handleLocationError(false, infoWindow, map.getCenter());
+		}
+	}
+});
+
+google.maps.event.addListener(marker, 'drag', function () {
+    $('input[name="origem"]').val( marker.getPosition().lat() +','+ marker.getPosition().lng() );
+
+	firebase.database().ref('/_config/origem').set( $('input[name="origem"]').val() );
+});
+
+
+$('#cats ul').once(function(event) { 
+	var node = $('#cats ul').tree('getSelectedNode');
+
+	if(!node || event.node.name != node.name){ 
+		var input = prompt("Nome da categoria",event.node.name);
+
+		if (input != null) {			
+			$('#cats ul').tree('updateNode',event.node,{name: input});
+			firebase.database().ref($('#cats ul').attr('ref')).set(  JSON.parse($('#cats ul').tree('toJson'))  );			
+		}
+    }   
+});
+
+$(document)
+.delegate("ul[ref='/_config/vendas/status/'] li", 'click', function(e){	
+	$('#vendas-status').populate('/_config/vendas/status/'+$(this).attr('id'));
+})
+.delegate("ul[ref='/_config/finance/modo/'] li", 'click', function(e){	
+	$('#finance-modos').populate('/_config/finance/modo/'+$(this).attr('id'));
+})
+.delegate("#cats .fa-plus", 'click', function(e){	
+	var input = prompt("Nome da categoria");
+
+	if (input != null) {
+		if(typeof $('#cats ul').attr('is_empty') == 'undefined'){
+			$('#cats ul').tree('appendNode',{name: input});
+			firebase.database().ref($('#cats ul').attr('ref')).set(  JSON.parse($('#cats ul').tree('toJson'))  );			
+		}else{		
+			firebase.database().ref($('#cats ul').attr('ref')).set( [{name:input}]  ).then(function() {
+				$('#cats ul').once(function(event) { 
+					var node = $('#cats ul').tree('getSelectedNode');
+
+					if(!node || event.node.name != node.name){ 
+						var input = prompt("Nome da categoria",event.node.name);
+
+						if (input != null) {			
+							$('#cats ul').tree('updateNode',event.node,{name: input});
+							firebase.database().ref($('#cats ul').attr('ref')).set(  JSON.parse($('#cats ul').tree('toJson'))  );			
+						}
+				    }   
+				});	
+			});		
+		} 		
+	}	
+
+})
+.delegate("[name='number'],[name='fator']", 'blur', function(e){	
+	var number = toFloat($("[name='number']").val());
+	var fator = toFloat($("[name='fator']").val());
+
+	if(!number){
+		number = 0;
+	}
+
+	if(!fator){
+		fator = 1;
+	}
+
+	console.log(  number * fator );
+	$("[name='time']").val( number * fator );
+});
+
+
+$("#btn-zonas").on("open", function() {
+	rectangle.setBounds( zonaMap.getBounds() );
+	rectangle.setOptions({fillColor: $('#zona-color').val()}); 
+
+	google.maps.event.trigger(zonaMap, "resize");
+	zonaMap.setCenter(zonaMap.getCenter()); 
+});
+
+$("#form-zonas").on("edit", function(event,data) {
+	zona_deserialize(data.bounds);
+
+	rectangle.setOptions({fillColor: data.cor}); 
+
+	google.maps.event.trigger(zonaMap, "resize");
+	zonaMap.setCenter(zonaMap.getCenter());
+});
+
+$.contextMenu({
+    selector: "ul[ref='/_config/vendas/status/'] li", 
+    callback: function(key, options) {
+        if(key == 'Excluir'){
+            firebase.database().ref('/_config/vendas/status/'+$(this).attr('id')).remove();
+        }else if(key == 'Editar'){
+          $('#vendas-status').populate( '/_config/vendas/status/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+});
+
+$.contextMenu({
+    selector: "ul[ref='/_config/finance/modo/'] li", 
+    callback: function(key, options) {
+        if(key == 'Excluir'){
+            firebase.database().ref('/_config/finance/modo/'+$(this).attr('id')).remove();
+        }else if(key == 'Editar'){
+          $('#finance-modos').populate( '/_config/finance/modo/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+});
+
+</script>
+<style type="text/css">
+	main section h3{
+		border-bottom: 1px dashed #ccc;
+		padding: 7px 0px;
+		margin: 0;
+		margin-top: 20px;
+		font-size: 150%;
+	}
+	main section h3:first-child{
+		margin-top: 0px;
+	}
+
+	main section ul{
+		margin: 0;
+	}
+	main section ul li{
+		cursor: pointer;
+		padding: 5px;
+	}
+	main section ul li:hover{
+		box-shadow: inset 0 2px 100px rgba(0,0,0,.2)
+	}	
+
+	ul[ref='/_config/vendas/status/'] li:nth-child(1),ul[ref='/_config/vendas/status/'] li:nth-child(2){
+		font: normal normal normal 14px/1 FontAwesome;
+	}
+	ul[ref='/_config/vendas/status/'] li:nth-child(1):before{
+	    content: "\f069";
+	    float: right;
+	    color: #666;	    
+	}	
+	ul[ref='/_config/vendas/status/'] li:nth-child(2):before{
+	    content: "\f0d1";
+	    float: right;
+	    color: #666;	    
+	}	
+</style>
+
+</section>	

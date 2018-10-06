@@ -1,0 +1,87 @@
+<header>
+  <h1>Usuários</h1>
+</header>
+
+<section>
+	<ul ref="/_users/" on class="box-list">
+		<li id="{key}">{nome}</li>
+	</ul>
+</section>	
+
+
+<form id="incluir" ref="/_users/" title="Incluir" width="500px">
+  <input name="key" type="hidden">
+  
+	<p>
+		<label for="nome">Nome:</label>
+		<input type="text" name="nome" required id="nome" required/>
+	</p>   
+	<p>
+		<label for="email">E-mail:</label>
+		<input type="email" name="email" required id="email"/>
+	</p>	 
+	<p id="caps">
+	  <label for="caps">Permições:</label>
+	  <div class="row">
+	    <div>
+		  <input type="checkbox" class="filled-in" id="usuarios" name="caps/usuarios" value="true"/>
+		  <label for="usuarios">Usuarios</label> 
+	    </div>	  	
+	    <div>
+		  <input type="checkbox" class="filled-in" id="vendas" name="caps/vendas" value="true"/>
+		  <label for="vendas">Vendas</label> 
+	    </div>
+	    <div>
+		  <input type="checkbox" class="filled-in" id="entregas" name="caps/entregas" value="true"/>
+		  <label for="entregas">Entregas</label> 
+	    </div>	 
+	    <div>
+		  <input type="checkbox" class="filled-in" id="estoque" name="caps/estoque" value="true"/>
+		  <label for="estoque">Estoque</label> 
+	    </div>
+	    <div>
+		  <input type="checkbox" class="filled-in" id="caixa" name="caps/caixa" value="true"/>
+		  <label for="caixa">Caixa</label> 
+	    </div>	    		       
+	  </div>
+	</p>  
+</form>
+
+
+<button ref="incluir" ctrl-key="i" class="btn-form btn-floating btn-large waves-effect waves-light" title="Incluir (CTRL I)"><i class="fa fa-plus"></i></button>
+
+<script type="text/javascript">
+$("form[ref='/_users/']").on("edit", function(event,data) {
+	$('#email').val('').removeAttr('required').parent().hide();
+
+	$('.filled-in').each(function( index ) {
+		var name = $(this).attr('name').split('/');
+	    
+	    if(typeof data.caps[name[1]] != 'undefined' && !$(this).is(':checked')){
+	      $(this).click();
+	    }
+	    if(typeof data.caps[name[1]] == 'undefined' && $(this).is(':checked')){
+	      $(this).click();
+	    }	    
+	});
+});	
+
+$("form[ref='/_users/']").on("new", function() {
+	$('#email').val('').attr('required',true).parent().show();
+
+	$('.filled-in').each(function( index ) {
+		var name = $(this).attr('name').split('/');
+	    
+	    if($(this).is(':checked')){
+	        $(this).click();
+    	}
+	});	
+});
+
+$(".filled-in").change(function() {
+	if(!$(this).is(':checked') ){
+		console.log( '/_users/'+$('[name="key"]').val()+'/'+$(this).attr('name') );
+		firebase.database().ref('/_users/'+$('[name="key"]').val()+'/'+$(this).attr('name')).remove();
+	}
+});
+</script>

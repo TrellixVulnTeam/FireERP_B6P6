@@ -1,0 +1,80 @@
+<header>
+  <h1>Entregas</h1>
+</header>
+<section>
+	<div id="mapa" style="width: 70%;height: 300px;display: inline-block;"></div>
+	<ul id="pedidos" style="width: 29%;display: inline-block;overflow-y: auto;float: right;margin: 0;">
+		<li id="{key}"><strong>{index}ª</strong>{endereco}<br /><spam class="fa fa-history" moment="{limit}"></spam></li>
+	</ul>
+</section>
+<script type="text/javascript">
+$(window).resize(function() {	
+	$('#mapa,#trajeto-texto').css('height',($(window).height() - $('main header').outerHeight())+'px');
+	google.maps.event.trigger(map, "resize");
+}).resize();
+
+var map;
+var directionsDisplay;
+var directionsService = new google.maps.DirectionsService();
+
+map = new google.maps.Map(document.getElementById("mapa"), {
+    zoom: 16,
+    mapTypeId: google.maps.MapTypeId.ROADMAP
+});
+
+directionsDisplay = new google.maps.DirectionsRenderer();
+directionsDisplay.setMap(map);
+//directionsDisplay.setPanel(document.getElementById("trajeto-texto"));
+
+
+firebase.database().ref('/_config/origem').once('value', function(origem) {
+	firebase.database().ref('/entregas/').on('value', function(snapshot) {
+		$('#pedidos').draw(snapshot);
+
+		var entregas = [];
+		var points = [];
+
+		  if (snapshot.hasChildren()) {
+		    snapshot.forEach(function(item) { 
+		    	entregas.push( item.val() );
+
+		    });
+		  }
+
+		sortJsonArrayByProperty(entregas, 'distance');
+
+
+		for (var i in entregas) {
+			points.push( {location:entregas[i].position} );
+		}
+
+		directionsService.route({
+			origin: origem.val(),
+			destination: origem.val(),
+			waypoints: points,
+			travelMode: google.maps.TravelMode.DRIVING
+		}, function(result, status) {
+			if (status == google.maps.DirectionsStatus.OK) {
+				directionsDisplay.setDirections(result);
+			}
+		});
+
+		setTimeout(function(){ 
+			google.maps.event.trigger(map, "resize"); 
+		}, 500);
+	});
+});
+</script>
+<style type="text/css">
+	#pedidos li{
+		border: 1px solid rgba(0,0,0,.1);
+		padding: 5px;
+		min-height: 50px;
+	}
+	#pedidos li strong{
+		font-size: 200%;
+		float: left;
+		color: #999;
+		margin-right: 20px;
+	}
+</style>

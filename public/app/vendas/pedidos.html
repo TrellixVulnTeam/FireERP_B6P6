@@ -1,0 +1,157 @@
+<header>
+  <h1>Pedidos</h1>
+
+  <a id="filter-status" href="javascript:void(0);" class="drop-btn fa fa-flag"></a>
+  <ul class='filter-status drop' ref="/_config/vendas/status/" on>
+    <li><a href="javascript:void(0);" style="background: {cor}">{nome}</a></li>
+  </ul>
+  <a href="javascript:void(0);" class="fa fa-sliders btn-filter" ctrl-key="l" title="Opções (CTRL + L)"></a>
+
+</header>
+
+
+<section>
+  <div class="tip">
+    <i class="fa fa-search"></i>
+    <input id="search" ref="cliente/nome" placeholder="Buscar..."/>
+  </div>
+
+
+  <ul id="vendas" ref="/vendas/" on orderBy="status">
+  	<li id="{key}" class="{if( key.substr(1, 6) == 'aberta' ) 'disabled'; else '';}" style="background: {getStatusCor(status)}">
+      <strong class="fa fa-history" style="float: right;" moment="{init}"></strong>
+  		<div ref="cliente" loop>
+  			<h6>{nome}</h6>
+  		</div>
+  		<ul ref="items" loop>
+  			<li id="{key}" for="{id}"> 
+  				<strong>{quantidade}x</strong> {nome}
+  			</li>		
+  		</ul>
+      <div ref="entrega">{endereco.split(',')[0]}</div>
+  		<strong>Status:</strong> {toUpCase(status)}
+  	</li>
+  </ul>
+
+
+<form id="incluir" ref="/vendas/" title="Venda" width="500px">
+  <input name="key" type="hidden">
+  <p>    
+    <label for="status">status:<br></label>  
+    <select name="status" id="status" ref="/_config/vendas/status/" on>
+      <option>{nome}</option>
+    </select>
+  </p> 
+</form>
+
+</section>
+
+<style type="text/css">
+  #vendas {
+    margin: 0px;
+    overflow: auto;
+    height: 100%;
+    -moz-column-count: 4;
+    -moz-column-gap: 1px;
+      -moz-column-fill: auto;
+    -webkit-column-count: 4;
+    -webkit-column-gap: 1px;
+    -webkit-column-fill: auto;
+    column-count: 4;
+    column-gap: 1px;
+    column-fill: auto;
+  }
+  @media (max-width:800px){  
+    #vendas {
+      column-count: 2;
+    }
+  }
+  #vendas > li{
+    break-inside: avoid-column;
+    -webkit-column-break-inside: avoid;
+	background: #fff;
+	border: 1px solid rgba(0,0,0,.1); 
+	padding: 5px;   
+  }
+	#vendas > li.disabled{
+		opacity: 0.5;
+		cursor: not-allowed;
+	}	
+  #vendas strong{
+  	    font-weight: 600;
+  }
+  #vendas [ref='cliente']{
+  	    border-bottom: 1px dashed rgba(0,0,0,.1);
+  }
+  #vendas [ref='items']{
+  	    padding: 5px;
+  }  
+</style>
+<script type="text/javascript">
+  function getStatusCor(status) {
+    for (var i in $_CONFIG.vendas.status){           
+      if($_CONFIG.vendas.status[i].nome == status){
+        return $_CONFIG.vendas.status[i].cor;
+      }
+    }
+  }
+
+$.contextMenu({
+    selector: '#vendas li', 
+    callback: function(key, options) {
+        var m = "clicked: " + key;
+
+        if(key == 'Excluir'){
+            firebase.database().ref('/vendas/'+$(this).attr('id')).remove()
+        }else if(key == 'Editar'){
+          $('form').populate( '/vendas/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+}); 
+
+$("form[ref='/vendas/']").on("edit", function(event,snap) {
+  console.log('snap',snap);
+
+  if(typeof snap.entrega == "undefined"){
+    $('select[name="status"] option:nth-child(2)').attr('disabled','disabled');
+  }else{
+    $('select[name="status"] option:nth-child(2)').removeAttr('disabled');
+  }  
+});
+
+$(document)
+.delegate('#vendas li', 'click', function(event){
+  $('form').populate( '/vendas/'+$(this).attr('id') );
+}) 
+.delegate('.filter-status li a', 'click', function(event){
+  $(".filter-status li a").not(this).removeClass('selected');
+  $(this).toggleClass('selected');
+
+  if($(this).hasClass('selected')){
+    var query = firebase.database().ref($('section ul[ref]').attr('ref')).orderByChild('status').startAt($(this).text()).endAt($(this).text()+"\uf8ff");
+
+    query.once('value', function(snapshot) {
+      $('section ul[ref]').attr('filtered',true).draw( snapshot );
+    });
+  }else{
+    $('section ul[ref]').removeAttr('filtered').once();
+  }
+}) 
+.delegate('#search', 'keyup', function( event ){
+  $('.filter-status li a').removeClass('selected');
+})  
+
+
+firebase.database().ref('/vendas/cliente/').once('value', function(snapshot) {
+  console.log(  snapshot.val() );
+});
+</script>

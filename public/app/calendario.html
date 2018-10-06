@@ -1,0 +1,157 @@
+<header>
+  <h1>Calendário</h1>
+</header>
+<section>
+	<div id='calendar'></div>
+</section>
+
+<form id="incluir" ref="/agenda/" title="Incluir" width="500px">
+  <input name="key" type="hidden">
+
+  <div style="width: 89%;display: inline-block;">
+    <label for="user_login">Nome:</label>
+    <input type="text" name="title" required autofocus/>
+  </div>
+  <div style="width: 10%;display: inline-block;float: right;padding: 0;">
+    <label for="user_login">Cor:<br></label>
+    <input type="color" name="color" style="width: 100%;"/>
+  </div> 
+
+  <div class="row">
+    <div>
+    	<input type="text" name="start" required validate="date" now format="YYYY-MM-DD"/>
+    </div>
+    <div style="display:none;">
+    	<input type="time" name="start_time"/>
+    </div>   
+    <div style="padding: 0 20px;"> até </div>
+    <div>
+    	<input type="text" name="end" validate="date" now format="YYYY-MM-DD"/>
+    </div>
+    <div style="display:none;">
+    	<input type="time" name="end_time"/>
+    </div>
+  </div>
+
+  <input type="checkbox" class="filled-in" id="allDay" checked="true" name="allDay" value="true"/>
+  <label for="allDay">Dia inteiro</label>                                
+</form>
+
+<button ref="incluir" class="btn-form btn-floating btn-large waves-effect waves-light" title="Incluir (CTRL + I)"><i class="fa fa-plus"></i></button>
+
+<script type="text/javascript">
+$('#calendar').fullCalendar({
+	header: {
+		left: 'prev,next today',
+		center: 'title',
+		right: 'month,agendaWeek,agendaDay'
+	},
+	navLinks: true,
+	editable: true,
+	resizable: true,
+	nowIndicator: true,
+	events: function(start, end, timezone, callback) {
+		$('.btn-form i').addClass('fa-spin');
+
+		firebase.database().ref("/agenda/").orderByChild("start").startAt(moment(start).format('YYYY-MM-DD')).endAt(moment(end).format('YYYY-MM-DD')).once('value', function(snap) {
+			var data =[]
+			snap.forEach(function(item) {
+				var row = item.val();
+				row.id = item.key;
+				data.push( row );
+			});
+
+			callback( data );
+
+			$('.btn-form i').removeClass('fa-spin');
+		});		
+    },
+    eventDrop:function(  event, delta, revertFunc, jsEvent, ui, view ) { 
+    	var start = $.fullCalendar.formatDate(event.start, "YYYY-MM-DD HH:mm:ss");
+
+    	start = start.replace(' 00:00:00','');
+
+    	firebase.database().ref('/agenda/'+event.id+'/start').set(start);
+    },
+    dayClick: function(date, jsEvent, view) {
+    	$( ".btn-form" ).click();
+    	
+    	$('form [name="start"]').val(date.format('DD/MM/YYYY'));
+    	$('form [name="end"]').val(date.format('DD/MM/YYYY'));
+    },
+    eventClick: function(event, jsEvent, view) {
+	    firebase.database().ref( '/agenda/'+event.id ).once('value', function(snap) {
+	        data = snap.val();
+
+	        $( ".btn-form" ).click();
+
+	        if(typeof data.start != 'undefined'){
+	        	data.start_time = moment(data.start).format("HH:mm");
+
+	        	if(data.start_time != '00:00'){	        		
+	        		if($("[name='allDay']").attr('checked') ){
+	        			$("[name='allDay']").click();
+	        		}
+	        	}else{
+	        		if(! $("[name='allDay']").attr('checked') ){
+	        			$("[name='allDay']").click();
+	        		}
+	        	}
+	        }
+
+	        if(typeof data.end != 'undefined'){
+	        	data.end_time = moment(data.end).format("HH:mm");
+	        }	        
+
+	        if(typeof data.end == 'undefined'){
+	        	data.end =data.start;
+	        }
+
+	        for (var i in data) {
+	          $('form [name="'+i+'"]').val(data[i]);
+	          $('form [name="'+i+'"]').attr('value',data[i]);
+
+	          if(typeof $('form [name="'+i+'"]').attr('format') != 'undefined'){
+	          	$('form [name="'+i+'"]').val(moment(data[i], [$('form [name="'+i+'"]').attr('format'), "YYYY-MM-DD"]).format("DD/MM/YYYY"));
+	          }
+	        }         
+
+  	        $('form [name="key"]').val(event.id);
+	    });
+    },
+    eventResize: function (event, dayDelta, minuteDelta, revertFunc, jsEvent, ui, view) {
+    	var end = $.fullCalendar.formatDate(event.end, "YYYY-MM-DD HH:mm:ss");
+
+    	end = end.replace(' 00:00:00','');
+
+    	firebase.database().ref('/agenda/'+event.id+'/end').set(end);
+    }   
+});	
+
+
+firebase.database().ref('/agenda/').on('child_changed', function(snapshot) {
+	$('#calendar').fullCalendar('refetchEvents');
+});
+
+firebase.database().ref('/agenda/').on('child_added', function(snapshot) {
+    $('#calendar').fullCalendar('refetchEvents');
+});
+
+firebase.database().ref('/agenda/').on('child_removed', function(snapshot) {
+    $('#calendar').fullCalendar('refetchEvents');  
+}); 
+
+$("[name='allDay']").change(function() {
+	console.log( $(this).is(':checked') );
+
+	if($(this).is(':checked')){
+		$("[type='time']").val('00:00').parent().hide();
+	}else{
+		$("[type='time']").parent().show();
+	}
+});
+
+$("[name='allDay']").click(function () {
+    $("[name='allDay']").attr('checked', this.checked);
+});
+</script>

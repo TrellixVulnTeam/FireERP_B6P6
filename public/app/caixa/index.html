@@ -1,0 +1,155 @@
+<header>
+  <h1>Caixa</h1>
+  <a href="/caixa/relatorios" class="fa fa-bar-chart"></a>
+</header>
+<section>
+  <div class="columns" id="blocos_topo">
+    <div id="b1"><div><i class='fa fa-money bg'></i><h4>Saldo:</h4><div style='font-size: 150%;'><strong style='font-size: 40%;position: relative;top: -10px;'>R$</strong> {toMoeda(saldo)}</div><br /><span>Recebimentos:</span> <strong style='font-size: 40%;position: relative;top: -10px;'>R$</strong> {toMoeda(recebimentos)}<br /><span>Pagamentos:</span> <strong style='font-size: 40%;position: relative;top: -10px;'>R$</strong> {toMoeda(row.pagamentos)}</div></div>
+    <div id="b2" class="min-800" style="height: 120px;width: 265px;"><div><img src='https://chart.googleapis.com/chart?cht=p&chd=t:{row.recebimentos},{(row.pagamentos*-1)}&chs=250x115&chl=Pagamentos|Recebimentos&chco=FFAAAA,AAFFAA' style='position: absolute;'/></div></div>
+    <div id="b3" class="min-800" style="height: 120px;width: 315px;"><div><img src='https://chart.googleapis.com/chart?cht=bvg&chs=300x115&chd=t:{recebimentos}|{pagamentos}&chco=AAFFAA,FFAAAA&chdl=Recebimentos|Pagamentos&chbh=25,1,6&chxt=x,y&chxl=0:{label}' style='position: absolute;'/></div></div>
+  </div>
+  <div class="tip">
+    <i class="fa fa-search"></i>
+    <input id="search" placeholder="Buscar..."/>
+  </div>
+  <table ref="/caixa/" empty="">
+    <thead>
+      <tr>
+        <th>Data</th>
+        <th>Nome</th>
+        <th>Valor<a href="javascript:void(0);" class="fa fa-sliders btn-filter" ctrl-key="l" title="Opções (CTRL + L)"></a></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr id="{key}">
+        <td style="background:{if(valor > 0) '#efe'; else '#fee';}">
+          {data}
+        </td>
+        <td style="background:{if(valor > 0) '#efe'; else '#fee';}">{nome}</td>
+        <td style="background:{if(valor > 0) '#efe'; else '#fee';}">                             
+          R$ {toMoeda(valor)}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <span id="cont"></span>
+
+  <ul class="pagination"></ul>
+</section>
+
+<form id="incluir" ref="/caixa/" title="Incluir" width="500px">
+  <input name="key" type="hidden">
+  <div style="width: 30%;">
+    <label for="valor">Valor:<br></label>
+    <input type="text" name="valor" id="valor" validate="moeda" format="float" autofocus blur/>
+  </div>    
+  <div style="width: 30%;padding-right: 0;">
+    <label for="data">Data:</label>
+    <input type="text" name="data" required validate="date" now/>
+  </div>  
+  
+  <p>
+    <label for="nome">Nome:</label>
+    <input type="text" name="nome" required autocomplete ref="/_indexed/caixa/nomes"/>
+  </p>    
+
+  <div class="box-more">
+    <p>    
+      <label for="modo">Tipo:<br></label>  
+      <select name="modo" id="modo" ref="/_config/finance/modo/" on>
+        <option>{nome}</option>
+      </select>
+    </p> 
+    <p>
+      <label for="obs">Observação:</label>
+      <textarea name="obs" class="materialize-textarea"></textarea>
+    </p>     
+  </div>
+  <i class="fa fa-chevron-down btn-form-more"></i>
+</form>
+
+<button id="plus" ctrl-key="+" ref="incluir" class="btn-form btn-floating btn-large green waves-effect waves-light" title="Incluir (CTRL +)"><i class="fa fa-plus"></i></button>
+
+<button id="minus" ctrl-key="-" ref="incluir" class="btn-form btn-floating btn-large red waves-effect waves-light" title="Incluir (CTRL -)" style="right: 100px;"><i class="fa fa-minus"></i></button>
+
+
+<script type="text/javascript">
+$("#minus").on("open", function() {
+  $('form [name="valor"]').val('-');
+  $('.ui-dialog-titlebar').css('background','#fee').find('.ui-dialog-title').html('Despesa');
+});
+
+$("#plus").on("open", function() {
+  $('.ui-dialog-titlebar').css('background','#efe').find('.ui-dialog-title').html('Receita');
+});
+
+$("#valor").blur(function() {
+  var valor = toFloat( $(this).val() );
+
+  if(valor > 0){
+    $('.ui-dialog-titlebar').css('background','#efe').find('.ui-dialog-title').html('Receita');
+  }else{
+    $('.ui-dialog-titlebar').css('background','#fee').find('.ui-dialog-title').html('Despesa');
+  }
+});
+
+firebase.database().ref('/_indexed/caixa/row').on('value', function(snap) {
+  if(snap.val()){
+    row = snap.val();
+    row.saldo = toFloat( row.saldo );
+
+    if(row.saldo > 0){
+      $('#b1').css('background','#efe');
+    }else{
+      $('#b1').css('background','#fee');
+    }
+
+    $('#b1').render(row).show();
+    $('#b2').render(row).show();
+  }else{
+    $('#b1,#b2').hide();
+  }
+});   
+
+firebase.database().ref( '/_indexed/caixa/dias').limitToLast(3).on('value', function(snap) {
+  if(snap.val()){
+    var row = {label:'',recebimentos:0,pagamentos:0};
+
+    snap.forEach(function(item) {
+      row.label = row.label + '|' + moment(item.key, "YYYY-MM-DD").format('DD/MM');
+
+      if(row.recebimentos != '') row.recebimentos = row.recebimentos + ',';
+      row.recebimentos = row.recebimentos + item.val().recebimentos;
+
+      if(row.pagamentos != '') row.pagamentos = row.pagamentos + ',';
+      row.pagamentos = row.pagamentos + (item.val().pagamentos*-1);    
+    });
+
+    $('#b3').render(row).show();
+  }else{
+    $('#b3').hide();
+  }
+});    
+
+$.contextMenu({
+    selector: 'table[ref] tbody tr', 
+    callback: function(key, options) {
+        var m = "clicked: " + key;
+
+        if(key == 'Excluir'){
+            firebase.database().ref('/caixa/'+$(this).attr('id')).remove()
+        }else if(key == 'Editar'){
+          $('form').populate( '/caixa/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+});
+</script>

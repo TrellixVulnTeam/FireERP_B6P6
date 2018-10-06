@@ -1,0 +1,934 @@
+<header>
+  <h1>PDV</h1>
+  <a href="javascript:void(0);" class="fa fa-plus btn-add"></a>
+  <a href="javascript:void(0);" class="fa fa-shopping-basket btn-cupom"></a>
+
+  <a href="javascript:void(0);" class="fa fa-map-marker" id="btn-entrega"></a>
+</header>
+<section id="pdv">
+	<div id="cats" tree ref="/_config/produtos/cats/"></div>
+	<ul id="produtos" ref="/produtos/" once><li id="{key}" ref="{estoque}" style="{if(tipo == 'Utilizar') 'display:none;'}" class="{if($('#cupom li[for='+key+']').length > 0) ' selected '; else '';}{if(estoque < toFloat($('#qtn').val()) && tipo == 'Revender' ) ' disabled '; else '';}"><div><img src="{if(typeof anexo != 'undefined') anexo; else '/img/produto-sem-imagem.png';}"></div><strong>{nome}</strong><span>R$ {toMoeda(valor)}</span></li></ul>
+	<div id="cupom">
+		<div id="cupom-cliente" style="background: #ccc;">			
+			<div style="padding: 9px;" id="{key}">
+				<strong style="font-size: 150%;{if(!fone && !cpf) 'display: none;';}">{if(fone) fone+'<br />'; else cpf+'<br />';}</strong>
+				<spam style="{if(!fone && !cpf) 'font-size: 200%;';}">{nome}</spam>
+			</div>
+		</div>
+
+		<ul id="items">
+			<li id="{key}" for="{id}"> 
+				<strong>{quantidade}x</strong> - {nome} <span>R$ {toMoeda(valor * quantidade)}</span>
+			</li>
+			{if($('#'+key).addClass('selected')) ''}
+		</ul>
+
+		<div id="cupom-result" widthBy="#cupom">
+			<button style="float:right;" class="box-receber btn btn-add-recebimento green waves-effect waves-light">+</button>
+			<div style="display: inline-block;">
+				<label class="box-receber">Total:<br /></label>
+				<strong id="vr_total"><span>R$</span> 0,00</strong>
+			</div>
+			<div class="box-receber" style="float: left;width: 90px;">
+				<label>Desconto:<br /></label>
+				<input style="border: 0;box-shadow: none;font-size: 250%;height: 50px;margin: 0;" type="text" required id="vr_desconto" placeholder="0,00" validate="moeda" format="float" blur/>
+			</div>
+			<ul id="pagamentos" class="box-receber">
+				<li id="{key}"> 
+					{data} - {if(typeof modo != 'undefined') modo; else 'Dinheiro';} <i style="float: right;">R$ {toMoeda(valor)}</i>
+				</li>
+			</ul>
+			<div id="vr_restante" class="box-receber" style="font-size: 200%;float: right;padding: 5px;"><span>R$</span> 0,00</div>
+
+			<button class="btn-receber btn-large green waves-effect waves-light" style="float: right;padding: 0 10px;">RECEBER</button>
+			<button disabled class="btn-finalizar btn-large blue waves-effect waves-light" style="float: right;padding: 0 10px;width: 100%;">FINALIZAR</button>			
+		</div>
+	</div>
+	<div id="tools" widthBy="#produtos,#cats" leftBy="#cats">
+		<button style="width: 5%;" class="btn btn-mais blue waves-effect waves-light" key="+">+</button>
+		<input style="width: 10%;text-align: center;" type="number" required id="qtn" placeholder="Quantidade" value="1" />
+		<button style="width: 5%;" class="btn btn-menos red waves-effect waves-light" key="-">-</button>
+
+		<button style="width: 5%;float: right;background: #999;" class="btn btn-venda-delete waves-effect waves-light fa fa-times" title="Cancelar a Venda"></button>
+
+		<input style="width: 68%;" type="text" required id="prod" autofocus placeholder="Produto" />		
+	</div>	
+</section>
+<div id="init">
+	<input type="text" required id="cliente" autocomplete ref="/_indexed/contatos/nomes" autofocus style="font-size: 200%;height: 80px;" placeholder="CPF, Telefone ou nome do cliente" />		
+	<button id="btn-init" class="btn-large green waves-effect waves-light">INICIAR</button>
+</div>
+
+
+<form id="item" title="Item" width="500px">
+  <input name="id" type="hidden">
+  <input name="key" type="hidden">
+  
+  <p>
+    <label for="nome">Nome:</label>
+    <input type="text" name="nome" required readonly />
+  </p>    
+  <div style="width: 30%;padding-right: 0;">
+    <label for="data">Quantidade:</label>
+    <input type="number" name="quantidade" required/>
+  </div>   
+  <div style="width: 30%;">
+    <label for="valor">Valor:<br></label>
+    <input type="text" name="valor" validate="moeda" format="float" autofocus blur/>
+  </div>     
+  
+  <div class="box-more">
+    <p>
+      <label for="obs">Observação:</label>
+      <textarea name="obs" class="materialize-textarea"></textarea>
+    </p>     
+  </div>
+  <i class="fa fa-chevron-down btn-form-more"></i>    
+</form>
+
+<form id="receber" title="Receber" width="500px">
+    <input name="key" type="hidden">
+    <div style="width: 30%;">
+	    <label for="valor">Valor:<br></label>
+	    <input type="text" name="valor" validate="moeda" format="float" autofocus blur/>
+    </div>    
+    <div style="width: 30%;padding-right: 0;">
+	    <label for="data">Data:</label>
+	    <input type="text" name="data" required validate="date" now/>
+    </div>  
+  
+    <p>    
+      <label for="modo">Tipo:<br></label>  
+      <select name="modo" ref="/_config/finance/modo/" on>
+        <option>{nome}</option>
+      </select>
+    </p>    
+</form>
+
+
+<form id="form-cliente" title="Cliente" width="500px">
+  <input name="key" type="hidden">
+  <p>
+    <label for="nome">Nome:</label>
+    <input type="text" name="nome" required autofocus>
+  </p>    
+
+  <div style="width: 30%;">
+    <label for="fone">Fone:<br></label>
+    <input type="text" name="fone">
+  </div>    
+  <div style="width: 30%;padding-right: 0;">
+    <label for="cpf">CPF:</label>
+    <input type="text" name="cpf"/>
+  </div>    
+</form>
+
+<form id="form-entrega" ref="/vendas/_aberta/entrega/" title="Entrega" width="500px;">
+	<input name="position" type="hidden" id="position">
+	<input name="distance" type="hidden" id="distance">
+	<input name="duration" type="hidden" id="duration">
+	<input name="zona" type="hidden" id="zona">
+
+    <div style="width: 75%;float: right;padding-right: 0;">    
+      <label for="entregador">Entregador:<br></label>  
+      <select name="entregador" id="entregador" ref="/_users/" on>
+        <option value="{key}">{nome}</option>
+      </select>
+    </div> 
+	<div style="width: 30%;">
+	    <label for="valor">Valor:<br></label>
+	    <input type="text" name="valor" validate="moeda" format="float" blur/>
+	</div> 
+  	<input id="address" type="text" value="" name="endereco" style="margin: 0;" autofocus>
+  	<span id="text"></span>
+  	<div id="map" style="width: 500px;height: 300px;"></div> 
+
+	<div class="box-more">
+	    <p>
+	      <label for="obs">Observação:</label>
+	      <textarea name="obs" class="materialize-textarea"></textarea>
+	    </p>     
+	</div>
+	<i class="fa fa-chevron-down btn-form-more"></i>
+	<script>
+		if(typeof google != "undefined"){
+	        var map = new google.maps.Map(document.getElementById('map'), {
+	          zoom: 16,
+	          center: {lat: 0, lng: 0}
+	        });
+	        var geocoder = new google.maps.Geocoder();
+		    var marker = new google.maps.Marker({
+		        map: map,
+		        draggable: true,
+		    });
+		    var service = new google.maps.DistanceMatrixService();
+
+		    google.maps.event.addListener(marker, 'drag', function () {
+		        geocoder.geocode({ 'latLng': marker.getPosition() }, function (results, status) {
+		            if (status == google.maps.GeocoderStatus.OK) {
+		                if (results[0]) { 		                	
+		                    $('#address').val(results[0].formatted_address);
+
+		                    $('#position').val( marker.getPosition().lat() +','+ marker.getPosition().lng() );
+
+		                    for (var i in zonas) {
+		                    	if(zonas[i].getBounds().contains(marker.getPosition()) ){
+		                    		$('#zona').val(i);	                    		
+		                    		$('#entregador').val(zonas_data[i].entregador);
+		                    		$('#form-entrega [name="valor"]').val( toMoeda(zonas_data[i].valor) );
+		                    	}
+		                    }
+
+							firebase.database().ref('/_config/origem').once('value', function(snapshot) {
+								service.getDistanceMatrix({
+								      origins: [snapshot.val()],
+								      destinations: [marker.getPosition().lat() +','+ marker.getPosition().lng()],
+								      travelMode: 'DRIVING',
+								      unitSystem: google.maps.UnitSystem.METRIC,
+								      avoidHighways: false,
+								      avoidTolls: false
+								  }, callDistance);						
+							});
+		                    
+		                }
+		            }
+		        });
+		    });		
+
+			var zonas = [];
+			var zonas_data = [];
+
+			firebase.database().ref('/_config/vendas/zonas').on('value', function(snap) {
+				snap.forEach(function(item) { 
+				    json = JSON.parse(item.val().bounds);
+				    zonas_data[item.key] = item.val();
+
+					if(typeof zonas[item.key] == 'undefined'){
+						zonas[item.key] = new google.maps.Rectangle({
+					        strokeWeight: 0.3,
+					        fillColor: item.val().cor,
+					        fillOpacity: 0.5,
+				          	map: map,
+				          	bounds: new google.maps.LatLngBounds(
+					          new google.maps.LatLng(json[0][0],json[0][1]),
+					          new google.maps.LatLng(json[1][0],json[1][1])
+					        ),
+					        editable: true,
+					        draggable: true		        
+				        });
+
+				        zonas[item.key].addListener('click', function() {
+					        infoWindow.setContent(item.val().endereco);
+					        infoWindow.setPosition(zonas[item.key].getBounds().getNorthEast());
+					        infoWindow.open(map);	        	
+				        });
+
+				        zonas[item.key].addListener('bounds_changed', function() {
+						    var json = zonas[item.key].getBounds().toString();
+
+						    json = json.replace(/\(/g,"[").replace(/\)/g,"]");
+
+						    firebase.database().ref('/_config/vendas/zonas/'+item.key+'/bounds').set(json);
+				        });
+					}else{
+					    json = JSON.parse(item.val().bounds);
+				        zonas[item.key].setBounds( new google.maps.LatLngBounds(
+			              new google.maps.LatLng(json[0][0],json[0][1]),
+			              new google.maps.LatLng(json[1][0],json[1][1])
+			            ) );						
+					}
+				});				
+			});
+
+			firebase.database().ref('/_config/vendas/zonas').on('child_removed', function(snapshot) {
+				zonas[snapshot.key].setMap(null);                   
+			});
+
+
+	        firebase.database().ref('/_config/origem').once('value', function(origem) {
+	        	var point = String( origem.val() ).split(',');
+	
+		    	marker.setPosition({  lat: parseFloat(point[0]), lng: parseFloat(point[1])  });
+
+		    	map.setCenter( marker.getPosition() );	    	
+			});
+
+	        $('#address').keyup(function() {
+
+			  clearTimeout(start);
+			  start = setTimeout(function(){ 
+			    geocodeAddress(geocoder, map);
+			  }, 500);        	
+	          
+	        });
+
+			function callDistance(response, status) {
+				if(response.rows[0].elements[0].status == 'OK'){
+					$('#distance').val(response.rows[0].elements[0].distance.value);
+					$('#duration').val(response.rows[0].elements[0].duration.value);
+
+					$('#text').html(response.rows[0].elements[0].distance.text+','+response.rows[0].elements[0].duration.text);
+			  	}else{
+					$('#distance').val('');
+					$('#duration').val('');
+					$('#text').html('');						  		
+			  	}
+			}	        
+
+	      	function geocodeAddress(geocoder, resultsMap) {
+		        var address = document.getElementById('address').value;	
+
+		        geocoder.geocode({address}, function(results, status) {
+		          if (status === 'OK') {
+		          	$('#position').val( String(results[0].geometry.location).replace('(','').replace(')','') );
+
+		          	marker.setPosition( results[0].geometry.location );
+		            resultsMap.setCenter(results[0].geometry.location);
+
+                    for (var i in zonas) {
+                    	if(zonas[i].getBounds().contains(marker.getPosition()) ){
+                    		$('#zona').val(i);		                    		
+                    		$('#entregador').val(zonas_data[i].entregador);
+                    		$('#form-entrega [name="valor"]').val( toMoeda(zonas_data[i].valor) );
+                    	}
+                    }
+
+					firebase.database().ref('/_config/origem').once('value', function(snapshot) {
+						service.getDistanceMatrix({
+						      origins: [snapshot.val()],
+						      destinations: [results[0].geometry.location],
+						      travelMode: 'DRIVING',
+						      unitSystem: google.maps.UnitSystem.METRIC,
+						      avoidHighways: false,
+						      avoidTolls: false
+						  }, callDistance);						
+					});
+
+		            $('#address').css('background','#fff');
+		          } else {
+		            $('#address').css('background','#fee');
+
+					$('#distance').val('');
+					$('#duration').val('');
+					$('#text').html('');		            
+		          }
+		        });
+	      	}
+
+	        autocomplete = new google.maps.places.Autocomplete((document.getElementById('address')),{types: ['geocode'],componentRestrictions: { country: 'BR'}});
+
+	        autocomplete.addListener('place_changed', function(){
+		        $('#address').keyup();        	
+	        });
+	        firebase.database().ref('/_config/limites').once('value', function(snap) {
+	        	if(snap.val()){
+				    json = JSON.parse(snap.val());
+
+				    var defaultBounds = new google.maps.LatLngBounds(
+				      new google.maps.LatLng(json[0][0],json[0][1]),
+				      new google.maps.LatLng(json[1][0],json[1][1])
+				    );	
+
+				    var options = {
+				    	types: ['geocode'],
+				        bounds:defaultBounds,
+				        componentRestrictions: { country: 'BR'}
+				    };			    
+
+			        autocomplete = new google.maps.places.Autocomplete((document.getElementById('address')), options);
+			        autocomplete.addListener('place_changed', function(){
+				        $('#address').keyup();        	
+			        });			        
+		    	}
+	        });	        
+    	}else{
+    		$('#btn-entrega').hide();
+    	}
+    </script>  
+</form>
+
+
+<style type="text/css">
+#init, section *{
+-webkit-transition: all 0ms linear;
+-moz-transition: all 0ms linear;
+-ms-transition: all 0ms linear;
+-o-transition: all 0ms linear;
+transition: all 0ms linear;         
+} 
+#init{
+	display: none;
+	padding: 10px;
+}
+#pdv{
+	display: none;width: 100%;height: 100%;position: absolute;left: 0;z-index: -1;padding: 0;
+}
+#cats{
+	display: inline-block;
+	margin-left: 195px;
+	height: 100%;
+	padding: 5px;
+	min-width: 150px;
+}
+#cats[is_empty]{
+	margin-left: 45px;
+}
+#cupom{
+	display: inline-block;
+	background: #ffa;
+	width: 30%;
+	float: right;
+	border-left: 1px solid #999;
+	height: 100%;
+	position: absolute;
+    right: 0;	
+}
+#cupom ul{
+	margin: 0;
+	font-size: 150%;
+	overflow-y: auto;
+	text-align: center;
+}
+#cupom ul li{
+    padding: 5px;
+    opacity: 0.9;
+    text-align: left;
+}
+#cupom ul li:hover{
+    padding: 5px;
+    opacity: 1;    
+    cursor: pointer;
+    background: #ffd400;
+}
+#cupom ul li span{
+	float:right;
+}
+#cupom ul li strong{
+	font-size: 130%;
+}
+#cupom-cliente:hover{
+	cursor: pointer;
+	box-shadow: #999 0px 2px 10px;
+}
+#cupom-result{
+	background: #ffa;
+	color: #444;
+	position: fixed;
+	bottom: 0;	
+	padding: 5px;
+	box-shadow: #999 0px 2px 10px;
+}
+#cupom-result strong{
+	margin: 5px;
+	font-size: 280%;
+	line-height: 49px;
+}
+#cupom-result span{
+	font-size: 50%;
+	color: #999;	
+}
+#cupom-result label{
+	color: #555;
+}
+#produtos{
+	display: inline-block;
+    height: 100%;
+    position: absolute;	
+    margin: 0;
+}
+#produtos li{
+    display: inline-block;
+    width: 25%;
+    border: 1px solid rgba(0,0,0,.1);
+}
+#produtos li>div{
+	min-height: 150px;
+	background: #fff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;	
+}
+#produtos li:hover{
+	box-shadow: inset 0 2px 100px rgba(0,0,0,.2);
+	border: 1px solid rgba(0,0,0,.5);
+	cursor: pointer;
+}
+#produtos li.selected{
+	border: 1px solid #090;
+	box-shadow: inset 0 2px 100px #0F0;
+}
+#produtos li.disabled{
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+#produtos li img{
+	width: 100%;
+}
+#produtos li strong{
+	margin-left: 5px;
+}
+#produtos li span{
+	float:right;
+	margin-right: 5px;
+}
+#tools{
+    position: fixed;
+    bottom: 0;
+    border-top: 1px solid #999;	
+    padding: 8px;
+    background: #eee;
+}
+#tools button{
+	opacity: 0.7;
+	padding: 0;
+}
+#tools input{
+	margin: 0;
+	border: 0;
+}
+.box-receber,.btn-finalizar{
+	display: none;
+}
+.btn-add{display: none;}
+@media (max-width:1025px){
+	#cats{
+		margin-left: 0px;
+	}
+	#cats[is_empty]{
+		margin-left: -150px;
+	}	
+	#produtos li{
+	    width: 50%;
+	}	
+}
+
+@media (max-width:700px){
+	#cupom{display: none;}
+	.btn-cupom{display: block;}
+}	
+@media (min-width:700px){
+	.btn-cupom{display: none;}
+}
+</style>
+
+
+<script type="text/javascript">
+if(typeof $_GET['id'] == 'undefined'){
+	$_GET['id'] = '_aberta';
+}
+
+if($_GET['id'].substr(0,1) != '_'){
+	$('.btn-finalizar').html('Salvar');
+}
+
+$('#item').attr('ref','/vendas/'+$_GET['id']+'/items/');
+$('#receber').attr('ref','/vendas/'+$_GET['id']+'/pagamentos/');
+$('#form-cliente').attr('ref','/vendas/'+$_GET['id']+'/cliente/');
+$('#form-entrega').attr('ref','/vendas/'+$_GET['id']+'/entrega/');
+$('#vr_desconto').attr('ref','/vendas/'+$_GET['id']+'/vr_desconto');
+
+$(window).resize(function() {
+	var position = $('#produtos').position();
+	var width = $(window).width();
+	if($('#cupom').is(':visible')){
+		width = width - $('#cupom').outerWidth();
+	}
+	width = width - position.left;
+
+	$('#produtos').css('width',width+'px');
+
+	if(!$('#produtos').is(':visible') && $(window).width() < 700){
+		$('#cupom').css('width',$(window).width()+'px');
+	}
+
+	if($(window).width() > 700){
+		$('#cupom').css('width','30%');
+		$('.btn-add,.btn-cupom').hide();
+		$('#cupom,#produtos,#cats:not([is_empty="true"]),#tools').show();
+	}else{
+		if(!$('#cupom').is(':visible')){
+			$('.btn-cupom').show();
+		}
+	}
+}).resize();
+
+setInterval(function(){ $(window).resize(); }, 500);
+
+
+$('#cats').once(function(event) { 
+	var node = $('#cats').tree('getSelectedNode');
+
+	if(!node || event.node.name != node.name){
+		firebase.database().ref('/produtos/').orderByChild("cat").equalTo(event.node.name).once('value', function(snapshot) {
+			$('#produtos').draw( snapshot );
+		});	        	
+    }else{
+		firebase.database().ref('/produtos/').once('value', function(snapshot) { 
+			$('#produtos').draw( snapshot );
+		});
+    }
+});
+
+firebase.database().ref( '/produtos/' ).on('child_changed', function(snapshot) {
+  	row_data = snapshot.val();
+  	row_data.key = snapshot.key;
+
+	$('#'+snapshot.key).render( row_data );
+});  
+
+firebase.database().ref('/vendas/'+$_GET['id']).on('value', function(snapshot) { 
+	if( snapshot.val() != null ){
+	    var vr_total = null;
+	    var vr_pago = null;
+	    var vr_restante = null;
+
+	    if(typeof snapshot.val().vr_desconto != 'undefined'){
+	        vr_total -= snapshot.val().vr_desconto;
+	    }
+
+	    let i = 0;
+	    for (i in snapshot.val().items) {
+	        vr_total += snapshot.val().items[i].valor * snapshot.val().items[i].quantidade;
+	    }
+
+	    i = 0;
+	    for (i in snapshot.val().pagamentos) {
+	        vr_pago += snapshot.val().pagamentos[i].valor;
+	    }
+
+	    vr_restante =  vr_total - vr_pago;  
+
+	    if(vr_restante == 0){
+	        vr_restante = null;
+	    }
+
+
+		if(typeof snapshot.val().cliente == 'undefined'){
+			$('#init').show();
+			$('#pdv').hide();
+		}else{
+			$('#init').hide();
+			$('#pdv').show();		
+		}
+
+		if(typeof snapshot.val().entrega != 'undefined'){
+			$('#btn-entrega').attr('class','fa fa fa-truck');
+			$('main header h1').html('DELIVERY');
+		}else{
+			$('#btn-entrega').attr('class','fa fa-map-marker');
+			$('main header h1').html('PDV');
+		}		
+
+		$('#vr_desconto').val( toMoeda(snapshot.val().vr_desconto) );
+
+		$('#cupom #items').draw( snapshot.child('items') );
+		$('#cupom #pagamentos').draw( snapshot.child('pagamentos') );
+
+		$('#cupom-result #vr_total').html('<span>R$</span> '+toMoeda(vr_total) );
+		$('#cupom-result #vr_restante').html('<label>Restante:</label> <span>R$</span> '+toMoeda(vr_restante) );
+
+
+		$('#cupom-cliente').draw(snapshot.child('cliente'));
+		//$('#cliente-cpf').html(snapshot.val().cliente.cpf);
+		//$('#cliente-nome').html(snapshot.val().cliente.nome);
+
+		if(vr_restante > 0){
+			$('.btn-finalizar').attr('disabled',true);
+		}else{
+			$('.btn-finalizar').removeAttr('disabled');
+		}
+
+		$('#pdv').show();
+		$('#init').hide();		
+	}else{
+		$('#init').show();
+		$('#pdv').hide();
+	}
+});
+
+firebase.database().ref('/vendas/'+$_GET['id']+'/items/').on('child_removed', function(snapshot) {
+    if($('#items li[for="'+snapshot.val().id+'"]').length == 0  ){
+    	$('#'+snapshot.val().id).removeClass('selected');
+	}	
+});
+
+
+$( "#produtos" ).on("render", function() {
+	setTimeout(function(){ 
+	    $("#produtos li").each(function( index ) {
+	    	$(this).render();
+	    });	
+	}, 10);
+});
+
+
+$(document).delegate('#produtos li', 'click', function(event){
+	if( $(this).hasClass('disabled') ){
+		return false;
+	}
+
+	id = $(this).attr('id');
+	nome = $(this).find('strong').text();
+	quantidade = toFloat( $('#qtn').val() );
+	valor = toFloat( $(this).find('span').text() );	
+
+	if(quantidade < 1) quantidade = 1;
+
+	$(this).addClass('selected').update({estoque:'{estoque-'+quantidade+'}'},function(event){
+		firebase.database().ref('/vendas/'+$_GET['id']+'/items/').push().set({id,nome,quantidade,valor});
+
+		$(this);
+
+		$('#qtn').val('1');
+		$('#prod').val('').focus();
+
+		if($(window).width() < 700){
+			$('#cupom,.btn-add').show();
+			$('#cats,#produtos,#tools,.btn-cupom').hide();
+		}
+	});
+})
+.delegate("#prod", 'keyup', function(e){	
+  var $imp = $(this);
+  var child = $(this).attr('ref');
+
+  if(typeof child == 'undefined') child = 'nome';
+
+  clearTimeout(start);
+  start = setTimeout(function(){ 
+
+    if($imp.val() == ''){
+		var node = $('#cats').tree('getSelectedNode');
+
+		if(node){
+			firebase.database().ref('/produtos/').orderByChild("cat").equalTo(node.name).once('value', function(snapshot) {
+				$('#produtos').draw( snapshot );
+			});	        	
+	    }else{
+			firebase.database().ref('/produtos/').once('value', function(snapshot) { 
+				$('#produtos').draw( snapshot );
+			});
+	    }
+    }else{
+	    firebase.database().ref('/produtos/').orderByChild('nome').startAt($imp.val()).endAt($imp.val()+"\uf8ff").once('value', function(snapshot) {
+			$('#produtos').draw( snapshot );
+		});	 
+    }
+  }, 500);
+})
+.delegate(".btn-finalizar", 'click', function(e){	
+	firebase.database().ref( '/vendas/'+$_GET['id']+'/' ).once('value', function(snap) {		
+
+		if($_GET['id'].substr(0,1) == '_'){
+			firebase.database().ref('/vendas/'+$_GET['id']).remove().then(function() {
+				var row = firebase.database().ref('/vendas/').push();
+				row.set( snap.val() );
+				if($_CONFIG.vendas.status){
+					row.update({status:$_CONFIG.vendas.status[Object.keys($_CONFIG.vendas.status)[0]].nome, init: moment().format("YYYY-MM-DD HH:mm:ss")});
+				}
+
+				if($_CONFIG.options.time && snap.val().entrega.duration){
+					let limit = moment().add($_CONFIG.options.time, 'seconds').add(snap.val().entrega.duration, 'seconds');
+					row.child('entrega').update({limit:moment(limit).format("YYYY-MM-DD HH:mm:ss")});
+				}
+			});					
+		}else{
+			var row = firebase.database().ref('/vendas/'+$_GET['id']+'/');
+			row.update({status:$_CONFIG.vendas.status[Object.keys($_CONFIG.vendas.status)[0]].nome, init: moment().format("YYYY-MM-DD HH-mm-ss")});		
+		}
+	});
+})
+.delegate("#btn-entrega", 'click', function(e){	
+	$('#form-entrega').populate(function(){
+		google.maps.event.trigger(map, "resize");
+		map.setCenter(map.getCenter()); 
+	});
+})
+.delegate("#items li", 'click', function(e){	
+	$('#item').populate('/vendas/'+$_GET['id']+'/items/'+$(this).attr('id'));
+})
+.delegate("#pagamentos li", 'click', function(e){	
+	$('#receber').populate('/vendas/'+$_GET['id']+'/pagamentos/'+$(this).attr('id'));
+})
+.delegate(".btn-add-recebimento", 'click', function(e){	
+	$('#receber').populate();
+})
+.delegate("#cupom-cliente div", 'click', function(e){	
+	$('#form-cliente').populate('/vendas/'+$_GET['id']+'/cliente/'+$(this).attr('id'));
+})
+.delegate(".btn-receber", 'click', function(e){
+	$('.box-receber,.btn-finalizar').show();
+	$(this).hide();
+	$('#vr_desconto').focus();
+})
+.delegate(".btn-mais", 'click', function(e){
+	$qtn = toFloat( $('#qtn').val() );
+	$qtn ++;
+
+	$('#qtn').val($qtn);
+
+    $("#produtos li").each(function( index ) {
+    	$(this).render();
+    });		
+})
+.delegate("#qtn", 'click', function(e){
+	$qtn = toFloat( $('#qtn').val() );
+
+	if($qtn < 1) $qtn = 1;
+
+	$('#qtn').val($qtn);
+
+    $("#produtos li").each(function( index ) {
+    	$(this).render();
+    });					
+})
+.delegate(".btn-menos", 'click', function(e){
+	$qtn = toFloat( $('#qtn').val() );
+	$qtn --;
+
+	if($qtn < 1) $qtn = 1;
+
+	$('#qtn').val($qtn);
+
+    $("#produtos li").each(function( index ) {
+    	$(this).render();
+    });		
+})
+.delegate(".btn-add", 'click', function(e){
+		$('#cupom,.btn-add').hide();
+		$('#cats,#produtos,#tools,.btn-cupom').show();
+})
+.delegate(".btn-cupom", 'click', function(e){
+		$('#cupom,.btn-add').show();
+		$('#cats,#produtos,#tools,.btn-cupom').hide();
+})
+.delegate("#cliente", 'blur', function(e){
+	var v = $('#cliente').val();
+	v= v.replaceAll('-','');
+	v= v.replaceAll(' ','');
+	v= v.replaceAll('(','');
+	v= v.replaceAll(')','');
+
+    if (/^[0-9]{11}$/.test( v ) && isCPF(v) ){
+    	v = v.substr(0,3) + '.' + v.substr(3,3) + '.' + v.substr(6,3) + '-' + v.substr(9,2);
+    	$('#cliente').val(v);
+    }
+
+    if (/^[0-9]{8}$/.test( v )){
+    	v = '(00) ' + v.substr(0,4) + '-' + v.substr(4,4);
+    	$('#cliente').val(v);
+    } 
+
+    if (/^[0-9]{9}$/.test( v )){
+    	v = '(00) ' + v.substr(0,5) + '-' + v.substr(5,4);
+    	$('#cliente').val(v);
+    }
+
+    if (/^[0-9]{10}$/.test( v )){
+    	v = '('+v.substr(0,2)+') ' + v.substr(2,4) + '-' + v.substr(6,4);
+    	$('#cliente').val(v);
+    }
+
+    if (/^[0-9]{11}$/.test( v )){
+    	v = '('+v.substr(0,2)+') ' + v.substr(2,5) + '-' + v.substr(7,4);
+    	$('#cliente').val(v);
+    }                  
+})
+.delegate(".btn-venda-delete", 'click', function(e){
+	$( "<div title='Tem certeza?'>Cancelar Venda?</div>" ).dialog({
+	  modal: true,
+	  buttons: {            
+	    Excluir: function() {
+	      firebase.database().ref('/vendas/'+$_GET['id']).remove();
+
+	      $(this).dialog( "close" );
+	    }
+	  }
+	});
+})
+.delegate("#btn-init", 'click', function(e){
+	var row = firebase.database().ref('/vendas/'+$_GET['id']+'/cliente');
+	var data = {};   
+
+
+	if (/^\([0-9]{2}\) [0-9]{5}\-[0-9]{4}$/.test( $('#cliente').val() ) || /^\([0-9]{2}\) [0-9]{4}\-[0-9]{4}$/.test( $('#cliente').val() )){
+		data['fone'] = $('#cliente').val();
+
+	    firebase.database().ref('/contatos/').orderByChild('fone').startAt($('#cliente').val()).endAt($('#cliente').val()).once('value', function(snapshot) {      
+	      if(snapshot.val()){
+	      	row.set( snapshot.val() );
+	      }else{
+	      	data['nome'] = 'Não informado';
+	      	row.push().set(data);
+	      }
+	    });	
+	}else if(/^[0-9]{3}\.[0-9]{3}\.[0-9]{3}\-[0-9]{2}$/.test( $('#cliente').val() )){
+		data['cpf'] = $('#cliente').val();
+
+	    firebase.database().ref('/contatos/').orderByChild('cpf').startAt($('#cliente').val()).endAt($('#cliente').val()).once('value', function(snapshot) {      
+	      if(snapshot.val()){
+	      	row.set( snapshot.val() );
+	      }else{
+	      	data['nome'] = 'Não informado';
+	      	row.push().set(data);
+	      }
+	    });		
+	}else{
+	    firebase.database().ref('/contatos/').orderByChild('nome').startAt($('#cliente').val()).endAt($('#cliente').val()).once('value', function(snapshot) {      
+	      if(snapshot.val()){
+	      	row.set( snapshot.val() );
+	      }else{
+	      	data['nome'] = $('#cliente').val();
+	      	row.push().set(data);
+	      }
+	    });			
+	}
+}); 
+
+
+$.contextMenu({
+    selector: '#items li', 
+    callback: function(key, options) {
+        if(key == 'Excluir'){
+            firebase.database().ref('/vendas/'+$_GET['id']+'/items/'+$(this).attr('id')).remove();
+
+            if($('#items li[for="'+$(this).attr('for')+'"]').length == 0  ){
+            	$('#'+$(this).attr('for')).removeClass('selected');
+        	}
+        }else if(key == 'Editar'){
+          $('#item').populate( '/vendas/'+$_GET['id']+'/items/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+});
+
+$.contextMenu({
+    selector: '#pagamentos li', 
+    callback: function(key, options) {
+        if(key == 'Excluir'){
+            firebase.database().ref('/vendas/'+$_GET['id']+'/pagamentos/'+$(this).attr('id')).remove();
+        }else if(key == 'Editar'){
+          $('#receber').populate( '/vendas/'+$_GET['id']+'/pagamentos/'+$(this).attr('id') );
+        }else{
+          alert( key );
+        }
+    },
+    items: {
+        "Editar": {name: "Editar", icon: "edit"},
+        "sep1": "---------",
+        "Excluir": {name: "Excluir", icon: function(){
+            return 'context-menu-icon context-menu-icon-quit';
+        }}
+    }
+});
+
+</script>	
